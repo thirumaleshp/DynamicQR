@@ -208,7 +208,7 @@ function App() {
         </motion.div>
       </div>
         <footer className="mt-20 text-center text-sm text-gray-900">
-            Developed by{" "}
+            Profile{" "}
             <a
             href="https://thirumalesh.xyz"
             target="_blank"
