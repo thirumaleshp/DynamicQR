@@ -1,13 +1,12 @@
-
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
+import QRCode from "react-qr-code";
 import { nanoid } from "nanoid";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/use-toast";
 import { Toaster } from "@/components/ui/toaster";
-import QRCodeCard from "@/components/QRCodeCard";
 
 function App() {
   const { toast } = useToast();
@@ -16,38 +15,15 @@ function App() {
   const [selectedQr, setSelectedQr] = useState(null);
 
   useEffect(() => {
-    try {
-      const savedQrCodes = localStorage.getItem("qrCodes");
-      if (savedQrCodes) {
-        const parsed = JSON.parse(savedQrCodes);
-        if (Array.isArray(parsed)) {
-          setQrCodes(parsed);
-        } else {
-          setQrCodes([]);
-          localStorage.setItem("qrCodes", JSON.stringify([]));
-        }
-      } else {
-        localStorage.setItem("qrCodes", JSON.stringify([]));
-      }
-    } catch (error) {
-      console.error("Error loading QR codes:", error);
-      setQrCodes([]);
-      localStorage.setItem("qrCodes", JSON.stringify([]));
+    const savedQrCodes = localStorage.getItem("qrCodes");
+    if (savedQrCodes) {
+      setQrCodes(JSON.parse(savedQrCodes));
     }
   }, []);
 
   const saveQrCodes = (newQrCodes) => {
-    try {
-      localStorage.setItem("qrCodes", JSON.stringify(newQrCodes));
-      setQrCodes(newQrCodes);
-    } catch (error) {
-      console.error("Error saving QR codes:", error);
-      toast({
-        title: "Error",
-        description: "Failed to save QR code. Please try again.",
-        variant: "destructive",
-      });
-    }
+    localStorage.setItem("qrCodes", JSON.stringify(newQrCodes));
+    setQrCodes(newQrCodes);
   };
 
   const isValidUrl = (urlString) => {
@@ -78,30 +54,21 @@ function App() {
       return;
     }
 
-    try {
-      const id = nanoid(6);
-      const newQrCode = {
-        id,
-        destinationUrl: destinationUrl.trim(),
-        createdAt: new Date().toISOString(),
-      };
+    const id = nanoid(6);
+    const newQrCode = {
+      id,
+      destinationUrl,
+      createdAt: new Date().toISOString(),
+    };
 
-      const newQrCodes = [...qrCodes, newQrCode];
-      saveQrCodes(newQrCodes);
-      setDestinationUrl("");
+    const newQrCodes = [...qrCodes, newQrCode];
+    saveQrCodes(newQrCodes);
+    setDestinationUrl("");
 
-      toast({
-        title: "Success",
-        description: "QR Code generated successfully!",
-      });
-    } catch (error) {
-      console.error("Error generating QR code:", error);
-      toast({
-        title: "Error",
-        description: "Failed to generate QR code. Please try again.",
-        variant: "destructive",
-      });
-    }
+    toast({
+      title: "Success",
+      description: "QR Code generated successfully!",
+    });
   };
 
   const updateDestination = (qrCode) => {
@@ -123,74 +90,18 @@ function App() {
       return;
     }
 
-    try {
-      const updatedQrCodes = qrCodes.map((qr) =>
-        qr.id === qrCode.id ? { ...qr, destinationUrl: destinationUrl.trim() } : qr
-      );
+    const updatedQrCodes = qrCodes.map((qr) =>
+      qr.id === qrCode.id ? { ...qr, destinationUrl } : qr
+    );
 
-      saveQrCodes(updatedQrCodes);
-      setDestinationUrl("");
-      setSelectedQr(null);
+    saveQrCodes(updatedQrCodes);
+    setDestinationUrl("");
+    setSelectedQr(null);
 
-      toast({
-        title: "Success",
-        description: "Destination URL updated successfully!",
-      });
-    } catch (error) {
-      console.error("Error updating destination:", error);
-      toast({
-        title: "Error",
-        description: "Failed to update destination. Please try again.",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const deleteQrCode = (id) => {
-    try {
-      const updatedQrCodes = qrCodes.filter(qr => qr.id !== id);
-      saveQrCodes(updatedQrCodes);
-      toast({
-        title: "Success",
-        description: "QR Code deleted successfully!",
-      });
-    } catch (error) {
-      console.error("Error deleting QR code:", error);
-      toast({
-        title: "Error",
-        description: "Failed to delete QR code. Please try again.",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const updateQrId = (oldId, newId) => {
-    if (qrCodes.some(qr => qr.id === newId)) {
-      toast({
-        title: "Error",
-        description: "This ID already exists. Please choose a different one.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    try {
-      const updatedQrCodes = qrCodes.map(qr =>
-        qr.id === oldId ? { ...qr, id: newId } : qr
-      );
-      saveQrCodes(updatedQrCodes);
-      toast({
-        title: "Success",
-        description: "QR Code ID updated successfully!",
-      });
-    } catch (error) {
-      console.error("Error updating QR code ID:", error);
-      toast({
-        title: "Error",
-        description: "Failed to update QR code ID. Please try again.",
-        variant: "destructive",
-      });
-    }
+    toast({
+      title: "Success",
+      description: "Destination URL updated successfully!",
+    });
   };
 
   const handleKeyPress = (e) => {
@@ -206,23 +117,6 @@ function App() {
   const getRedirectUrl = (id) => {
     const baseUrl = window.location.origin;
     return `${baseUrl}/r/${id}`;
-  };
-
-  const copyToClipboard = async (text) => {
-    try {
-      await navigator.clipboard.writeText(text);
-      toast({
-        title: "Success",
-        description: "URL copied to clipboard!",
-      });
-    } catch (err) {
-      console.error("Failed to copy:", err);
-      toast({
-        title: "Error",
-        description: "Failed to copy URL",
-        variant: "destructive",
-      });
-    }
   };
 
   return (
@@ -268,21 +162,62 @@ function App() {
           className="grid gap-6 md:grid-cols-2 lg:grid-cols-3"
         >
           {qrCodes.map((qrCode) => (
-            <QRCodeCard
+            <motion.div
               key={qrCode.id}
-              qrCode={qrCode}
-              onDelete={deleteQrCode}
-              onUpdateDestination={(qr) => {
-                setSelectedQr(qr);
-                setDestinationUrl(qr.destinationUrl);
-              }}
-              onUpdateId={updateQrId}
-              getRedirectUrl={getRedirectUrl}
-              copyToClipboard={copyToClipboard}
-            />
+              layout
+              className="rounded-xl bg-white p-6 shadow-lg"
+            >
+              <div className="mb-4 flex justify-center">
+                <QRCode
+                  value={getRedirectUrl(qrCode.id)}
+                  size={160}
+                  className="h-40 w-40"
+                  level="H"
+                />
+              </div>
+              <div className="text-center">
+                <p className="mb-2 font-medium text-gray-900">ID: {qrCode.id}</p>
+                <p className="mb-2 text-sm text-gray-500 break-all">
+                  QR URL: {getRedirectUrl(qrCode.id)}
+                </p>
+                <p className="mb-4 text-sm text-gray-500 break-all">
+                  Redirects to: {qrCode.destinationUrl}
+                </p>
+                <div className="flex gap-2 justify-center">
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setSelectedQr(qrCode);
+                      setDestinationUrl(qrCode.destinationUrl);
+                    }}
+                  >
+                    Change Destination
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      window.open(qrCode.destinationUrl, '_blank');
+                    }}
+                  >
+                    Test URL
+                  </Button>
+                </div>
+              </div>
+            </motion.div>
           ))}
         </motion.div>
       </div>
+        <footer className="mt-20 text-center text-sm text-gray-900">
+            Developed by{" "}
+            <a
+            href="https://thirumalesh.xyz"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="font-medium text-indigo-600 hover:underline"
+            >
+            @thirumalesh
+            </a>
+        </footer>
       <Toaster />
     </div>
   );
