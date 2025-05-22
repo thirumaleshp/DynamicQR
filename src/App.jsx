@@ -7,6 +7,17 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/use-toast";
 import { Toaster } from "@/components/ui/toaster";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 function App() {
   const { toast } = useToast();
@@ -68,6 +79,15 @@ function App() {
     toast({
       title: "Success",
       description: "QR Code generated successfully!",
+    });
+  };
+
+  const handleDeleteQrCode = (qrCodeId) => {
+    const newQrCodes = qrCodes.filter((qr) => qr.id !== qrCodeId);
+    saveQrCodes(newQrCodes);
+    toast({
+      title: "Success",
+      description: "QR Code deleted successfully!",
     });
   };
 
@@ -201,6 +221,25 @@ function App() {
                   >
                     Test URL
                   </Button>
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button variant="destructive">Delete</Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          This action cannot be undone. This will permanently delete the QR code.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={() => handleDeleteQrCode(qrCode.id)}>
+                          Yes, delete
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
                 </div>
               </div>
             </motion.div>

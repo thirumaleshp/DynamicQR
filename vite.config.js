@@ -150,7 +150,7 @@ const addTransformIndexHtml = {
 	},
 };
 
-console.warn = () => {};
+// console.warn = () => {};
 
 export default defineConfig({
 	plugins: [react(), addTransformIndexHtml],
