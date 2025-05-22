@@ -44,7 +44,7 @@ function RedirectPage() {
     }, 1000); // slight delay for animation
 
     return () => clearTimeout(timeoutId);
-  }, [id]); // cleaned up dependency
+  }, [id, navigate]); // cleaned up dependency
 
   // If there's an error, show error screen
   if (error) {
