@@ -8,6 +8,8 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/use-toast";
 import { Toaster } from "@/components/ui/toaster";
 
+const API_URL = '/api';
+
 function App() {
   const { toast } = useToast();
   const [qrCodes, setQrCodes] = useState([]);
@@ -15,15 +17,22 @@ function App() {
   const [selectedQr, setSelectedQr] = useState(null);
 
   useEffect(() => {
-    const savedQrCodes = localStorage.getItem("qrCodes");
-    if (savedQrCodes) {
-      setQrCodes(JSON.parse(savedQrCodes));
-    }
+    fetchQrCodes();
   }, []);
 
-  const saveQrCodes = (newQrCodes) => {
-    localStorage.setItem("qrCodes", JSON.stringify(newQrCodes));
-    setQrCodes(newQrCodes);
+  const fetchQrCodes = async () => {
+    try {
+      const response = await fetch(`${API_URL}/qrcodes`);
+      const data = await response.json();
+      setQrCodes(data);
+    } catch (error) {
+      console.error('Error fetching QR codes:', error);
+      toast({
+        title: "Error",
+        description: "Failed to fetch QR codes",
+        variant: "destructive",
+      });
+    }
   };
 
   const isValidUrl = (urlString) => {
@@ -35,7 +44,7 @@ function App() {
     }
   };
 
-  const generateQrCode = () => {
+  const generateQrCode = async () => {
     if (!destinationUrl) {
       toast({
         title: "Error",
@@ -54,24 +63,42 @@ function App() {
       return;
     }
 
-    const id = nanoid(6);
-    const newQrCode = {
-      id,
-      destinationUrl,
-      createdAt: new Date().toISOString(),
-    };
+    try {
+      const id = nanoid(6);
+      const response = await fetch(`${API_URL}/qrcodes`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          id,
+          destinationUrl,
+        }),
+      });
 
-    const newQrCodes = [...qrCodes, newQrCode];
-    saveQrCodes(newQrCodes);
-    setDestinationUrl("");
+      if (!response.ok) {
+        throw new Error('Failed to create QR code');
+      }
 
-    toast({
-      title: "Success",
-      description: "QR Code generated successfully!",
-    });
+      const newQrCode = await response.json();
+      setQrCodes([...qrCodes, newQrCode]);
+      setDestinationUrl("");
+
+      toast({
+        title: "Success",
+        description: "QR Code generated successfully!",
+      });
+    } catch (error) {
+      console.error('Error creating QR code:', error);
+      toast({
+        title: "Error",
+        description: "Failed to generate QR code",
+        variant: "destructive",
+      });
+    }
   };
 
-  const updateDestination = (qrCode) => {
+  const updateDestination = async (qrCode) => {
     if (!destinationUrl) {
       toast({
         title: "Error",
@@ -90,18 +117,40 @@ function App() {
       return;
     }
 
-    const updatedQrCodes = qrCodes.map((qr) =>
-      qr.id === qrCode.id ? { ...qr, destinationUrl } : qr
-    );
+    try {
+      const response = await fetch(`${API_URL}/qrcodes/${qrCode.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          destinationUrl,
+        }),
+      });
 
-    saveQrCodes(updatedQrCodes);
-    setDestinationUrl("");
-    setSelectedQr(null);
+      if (!response.ok) {
+        throw new Error('Failed to update QR code');
+      }
 
-    toast({
-      title: "Success",
-      description: "Destination URL updated successfully!",
-    });
+      const updatedQrCode = await response.json();
+      setQrCodes(qrCodes.map((qr) =>
+        qr.id === qrCode.id ? updatedQrCode : qr
+      ));
+      setDestinationUrl("");
+      setSelectedQr(null);
+
+      toast({
+        title: "Success",
+        description: "Destination URL updated successfully!",
+      });
+    } catch (error) {
+      console.error('Error updating QR code:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update destination URL",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleKeyPress = (e) => {
@@ -207,17 +256,17 @@ function App() {
           ))}
         </motion.div>
       </div>
-        <footer className="mt-20 text-center text-sm text-gray-900">
-            Profile{" "}
-            <a
-            href="https://thirumalesh.xyz"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="font-medium text-indigo-600 hover:underline"
-            >
-            @thirumalesh
-            </a>
-        </footer>
+      <footer className="mt-20 text-center text-sm text-gray-900">
+        Profile{" "}
+        <a
+          href="https://thirumalesh.xyz"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="font-medium text-indigo-600 hover:underline"
+        >
+          @thirumalesh
+        </a>
+      </footer>
       <Toaster />
     </div>
   );

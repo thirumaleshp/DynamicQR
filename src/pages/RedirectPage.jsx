@@ -2,6 +2,8 @@ import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 
+const API_URL = '/api';
+
 function RedirectPage() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -10,15 +12,13 @@ function RedirectPage() {
   useEffect(() => {
     const redirectToDestination = async () => {
       try {
-        const savedQrCodes = localStorage.getItem("qrCodes");
-        if (!savedQrCodes) {
+        const response = await fetch(`${API_URL}/qrcodes/${id}`);
+        if (!response.ok) {
           setError(true);
           return;
         }
 
-        const qrCodes = JSON.parse(savedQrCodes);
-        const qrCode = qrCodes.find((qr) => qr.id === id);
-
+        const qrCode = await response.json();
         if (!qrCode || !qrCode.destinationUrl) {
           setError(true);
           return;
@@ -44,7 +44,7 @@ function RedirectPage() {
     }, 1000); // slight delay for animation
 
     return () => clearTimeout(timeoutId);
-  }, [id]); // cleaned up dependency
+  }, [id]);
 
   // If there's an error, show error screen
   if (error) {
