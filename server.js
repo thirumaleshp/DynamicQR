@@ -1,64 +1,79 @@
 import express from 'express';
-import cors from 'cors';
 import bodyParser from 'body-parser';
+import cors from 'cors';
+import { nanoid } from 'nanoid';
 
 const app = express();
-const port = process.env.PORT || 3001;
+const port = 3001;
 
-// Middleware
+// In-memory storage (replace with a database in production)
+let redirects = new Map();
+
 app.use(cors());
 app.use(bodyParser.json());
 
-// In-memory storage (replace with a database in production)
-let qrCodes = [];
-
-// Get all QR codes
-app.get('/api/qrcodes', (req, res) => {
-  res.json(qrCodes);
+// GET all redirects
+app.get('/api/redirects', (req, res) => {
+  res.json(Array.from(redirects.values()));
 });
 
-// Create a new QR code
-app.post('/api/qrcodes', (req, res) => {
-  const { id, destinationUrl } = req.body;
-  const newQrCode = {
-    id,
-    destinationUrl,
-    createdAt: new Date().toISOString(),
-  };
-  qrCodes.push(newQrCode);
-  res.status(201).json(newQrCode);
+// GET a single redirect by ID
+app.get('/api/redirects/:id', (req, res) => {
+  const id = req.params.id;
+  const redirect = redirects.get(id);
+
+  if (redirect) {
+    res.json(redirect);
+  } else {
+    res.status(404).json({ error: 'Redirect not found' });
+  }
 });
 
-// Update a QR code
-app.put('/api/qrcodes/:id', (req, res) => {
-  const { id } = req.params;
+// POST a new redirect
+app.post('/api/redirects', (req, res) => {
   const { destinationUrl } = req.body;
-  const qrCodeIndex = qrCodes.findIndex(qr => qr.id === id);
-  
-  if (qrCodeIndex === -1) {
-    return res.status(404).json({ error: 'QR code not found' });
+  if (!destinationUrl) {
+    return res.status(400).json({ error: 'Destination URL is required' });
   }
 
-  qrCodes[qrCodeIndex] = {
-    ...qrCodes[qrCodeIndex],
-    destinationUrl,
-  };
+  const id = nanoid(6);
+  const newRedirect = { id, destinationUrl };
+  redirects.set(id, newRedirect);
 
-  res.json(qrCodes[qrCodeIndex]);
+  res.status(201).json(newRedirect);
 });
 
-// Get a specific QR code
-app.get('/api/qrcodes/:id', (req, res) => {
-  const { id } = req.params;
-  const qrCode = qrCodes.find(qr => qr.id === id);
-  
-  if (!qrCode) {
-    return res.status(404).json({ error: 'QR code not found' });
+// PUT update a redirect by ID
+app.put('/api/redirects/:id', (req, res) => {
+  const id = req.params.id;
+  const { destinationUrl } = req.body;
+
+  if (!redirects.has(id)) {
+    return res.status(404).json({ error: 'Redirect not found' });
   }
 
-  res.json(qrCode);
+  if (!destinationUrl) {
+    return res.status(400).json({ error: 'Destination URL is required' });
+  }
+
+  const updatedRedirect = { id, destinationUrl };
+  redirects.set(id, updatedRedirect);
+
+  res.json(updatedRedirect);
+});
+
+// DELETE a redirect by ID
+app.delete('/api/redirects/:id', (req, res) => {
+  const id = req.params.id;
+
+  if (!redirects.has(id)) {
+    return res.status(404).json({ error: 'Redirect not found' });
+  }
+
+  redirects.delete(id);
+  res.status(204).end();
 });
 
 app.listen(port, () => {
-  console.log(`Server is running on port ${port}`);
+  console.log(`Server running at http://localhost:${port}`);
 }); 

@@ -7,13 +7,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/use-toast";
 import { Toaster } from "@/components/ui/toaster";
-import { createClient } from '@supabase/supabase-js';
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-const supabase = createClient(supabaseUrl, supabaseKey);
 
-const API_URL = 'https://dynamicscan.vercel.app/api/qrcodes';
+const API_URL = import.meta.env.PROD ? 'https://dynamicscan.vercel.app/api/qrcodes' : 'http://localhost:3001/api/redirects';
 
 function App() {
   const { toast } = useToast();
@@ -73,25 +71,21 @@ function App() {
       const id = nanoid(6);
       console.log('Generated ID:', id);
 
-      const { data: created, error: createError } = await supabase
-        .from('redirects')
-        .insert([{ id: id, destination_url: destinationUrl }])
-        .select()
-        .single();
+      const response = await fetch(`${API_URL}/${id}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          destinationUrl,
+        }),
+      });
 
-      console.log('Supabase Client POST result - created:', created);
-      console.log('Supabase Client POST result - createError:', createError);
-
-      if (createError) {
-        console.error('Failed to create redirect in Supabase (Client-Side):', createError);
-        toast({
-          title: "Error",
-          description: createError.message || "Failed to generate QR code (DB error)",
-          variant: "destructive",
-        });
-        return;
+      if (!response.ok) {
+        throw new Error('Failed to create redirect');
       }
 
+      const created = await response.json();
       setRedirects([...redirects, created]);
       setDestinationUrl("");
 
