@@ -9,6 +9,10 @@ import { useToast } from "@/components/ui/use-toast";
 import { Toaster } from "@/components/ui/toaster";
 import { createClient } from '@supabase/supabase-js';
 
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+const supabase = createClient(supabaseUrl, supabaseKey);
+
 const API_URL = 'https://dynamicscan.vercel.app/api/qrcodes';
 
 function App() {
@@ -46,7 +50,7 @@ function App() {
   };
 
   const generateRedirect = async () => {
-    console.log('Attempting to generate redirect');
+    console.log('Attempting to generate redirect (Client-Side)');
     if (!destinationUrl) {
       toast({
         title: "Error",
@@ -67,34 +71,28 @@ function App() {
 
     try {
       const id = nanoid(6);
-      const supabaseUrl = process.env.SUPABASE_URL;
-      const supabaseKey = process.env.SUPABASE_ANON_KEY;
+      console.log('Generated ID:', id);
 
-      console.log('Before Supabase client creation');
-      console.log('Supabase URL type:', typeof supabaseUrl, 'length:', supabaseUrl?.length);
-      console.log('Supabase Key type:', typeof supabaseKey, 'length:', supabaseKey?.length);
+      const { data: created, error: createError } = await supabase
+        .from('redirects')
+        .insert([{ id: id, destination_url: destinationUrl }])
+        .select()
+        .single();
 
-      const supabase = createClient(supabaseUrl, supabaseKey);
+      console.log('Supabase Client POST result - created:', created);
+      console.log('Supabase Client POST result - createError:', createError);
 
-      console.log('After Supabase client creation');
-
-      const response = await fetch(`${API_URL}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          id,
-          destinationUrl,
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to create redirect');
+      if (createError) {
+        console.error('Failed to create redirect in Supabase (Client-Side):', createError);
+        toast({
+          title: "Error",
+          description: createError.message || "Failed to generate QR code (DB error)",
+          variant: "destructive",
+        });
+        return;
       }
 
-      const newRedirect = await response.json();
-      setRedirects([...redirects, newRedirect]);
+      setRedirects([...redirects, created]);
       setDestinationUrl("");
 
       toast({
@@ -102,7 +100,7 @@ function App() {
         description: "Redirect created successfully!",
       });
     } catch (error) {
-      console.error('Error creating redirect:', error);
+      console.error('Error creating redirect (Client-Side Catch):', error);
       toast({
         title: "Error",
         description: "Failed to create redirect",
