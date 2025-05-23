@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/use-toast";
 import { Toaster } from "@/components/ui/toaster";
+import { createClient } from '@supabase/supabase-js';
 
 const API_URL = 'https://dynamicscan.vercel.app/api/qrcodes';
 
@@ -66,6 +67,17 @@ function App() {
 
     try {
       const id = nanoid(6);
+      const supabaseUrl = process.env.SUPABASE_URL;
+      const supabaseKey = process.env.SUPABASE_ANON_KEY;
+
+      console.log('Before Supabase client creation');
+      console.log('Supabase URL type:', typeof supabaseUrl, 'length:', supabaseUrl?.length);
+      console.log('Supabase Key type:', typeof supabaseKey, 'length:', supabaseKey?.length);
+
+      const supabase = createClient(supabaseUrl, supabaseKey);
+
+      console.log('After Supabase client creation');
+
       const response = await fetch(`${API_URL}`, {
         method: 'POST',
         headers: {
