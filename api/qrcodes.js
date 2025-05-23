@@ -76,24 +76,30 @@ export default async function handler(req, res) {
            return res.status(400).json({ error: 'Missing ID or destination URL in request body' });
         }
 
-        const { data: created, error: createError } = await supabase
-          .from('redirects')
-          .insert([{ id: newId, destination_url: destinationUrl }])
-          .select()
-          .single();
+        // Add a try...catch around the Supabase call
+        try {
+          const { data: created, error: createError } = await supabase
+            .from('redirects')
+            .insert([{ id: newId, destination_url: destinationUrl }])
+            .select()
+            .single();
 
-        console.log('Supabase POST result - created:', created);
-        console.log('Supabase POST result - createError:', createError);
+          console.log('Supabase POST result - created:', created);
+          console.log('Supabase POST result - createError:', createError);
 
-        if (createError) {
-          console.error('Failed to create redirect in Supabase:', createError);
-          // More specific error message might be in createError.details or createError.message
-          return res.status(500).json({ error: createError.message || 'Failed to create redirect' });
+          if (createError) {
+            console.error('Failed to create redirect in Supabase:', createError);
+            return res.status(500).json({ error: createError.message || 'Failed to create redirect' });
+          }
+          return res.status(201).json(created);
+        } catch (supabaseError) {
+           console.error('Error during Supabase insert call:', supabaseError);
+           return res.status(500).json({ error: 'Error communicating with database' });
         }
-        return res.status(201).json(created);
+
       } catch (parseError) {
-         console.error('Error parsing request body:', parseError);
-         return res.status(400).json({ error: 'Invalid request body' });
+         console.error('Error processing request body or before Supabase call:', parseError);
+         return res.status(400).json({ error: 'Invalid request body or internal error' });
       }
 
     case 'PUT':
