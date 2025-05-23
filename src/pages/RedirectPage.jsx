@@ -2,57 +2,58 @@ import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 
-const API_URL = import.meta.env.PROD ? '/api/qrcodes' : '/api/qrcodes';
+const API_URL = 'https://dynamicscan.vercel.app/api/qrcodes';
 
 function RedirectPage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const [error, setError] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const redirectToDestination = async () => {
       try {
-        console.log('Fetching QR code for ID:', id);
+        console.log('Fetching redirect for ID:', id);
         const response = await fetch(`${API_URL}/${id}`);
         console.log('Response status:', response.status);
         
         if (!response.ok) {
           console.error('Response not OK:', response.status);
           setError(true);
+          setLoading(false);
           return;
         }
 
-        const qrCode = await response.json();
-        console.log('QR code data:', qrCode);
+        const redirect = await response.json();
+        console.log('Redirect data:', redirect);
 
-        if (!qrCode || !qrCode.destinationUrl) {
-          console.error('Invalid QR code data:', qrCode);
+        if (!redirect || !redirect.destinationUrl) {
+          console.error('Invalid redirect data:', redirect);
           setError(true);
+          setLoading(false);
           return;
         }
 
         // Optional: Check if URL is valid
-        const isValidUrl = /^https?:\/\//i.test(qrCode.destinationUrl);
+        const isValidUrl = /^https?:\/\//i.test(redirect.destinationUrl);
         if (!isValidUrl) {
-          console.error('Invalid destination URL:', qrCode.destinationUrl);
+          console.error('Invalid destination URL:', redirect.destinationUrl);
           setError(true);
+          setLoading(false);
           return;
         }
 
-        console.log('Redirecting to:', qrCode.destinationUrl);
+        console.log('Redirecting to:', redirect.destinationUrl);
         // Redirect to the destination URL
-        window.location.replace(qrCode.destinationUrl);
+        window.location.replace(redirect.destinationUrl);
       } catch (err) {
         console.error("Redirect error:", err);
         setError(true);
+        setLoading(false);
       }
     };
 
-    const timeoutId = setTimeout(() => {
-      redirectToDestination();
-    }, 1000); // slight delay for animation
-
-    return () => clearTimeout(timeoutId);
+    redirectToDestination();
   }, [id]);
 
   // If there's an error, show error screen
@@ -80,10 +81,10 @@ function RedirectPage() {
             </svg>
           </div>
           <h1 className="text-2xl font-semibold text-gray-900 mb-2">
-            Invalid QR Code
+            Invalid Redirect
           </h1>
           <p className="text-gray-600 mb-6">
-            This QR code link appears to be invalid or expired.
+            This redirect link appears to be invalid or expired.
           </p>
           <button
             onClick={() => navigate("/")}

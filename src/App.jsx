@@ -8,28 +8,28 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/use-toast";
 import { Toaster } from "@/components/ui/toaster";
 
-const API_URL = import.meta.env.PROD ? '/api/qrcodes' : '/api/qrcodes';
+const API_URL = 'https://dynamicscan.vercel.app/api/qrcodes';
 
 function App() {
   const { toast } = useToast();
-  const [qrCodes, setQrCodes] = useState([]);
+  const [redirects, setRedirects] = useState([]);
   const [destinationUrl, setDestinationUrl] = useState("");
-  const [selectedQr, setSelectedQr] = useState(null);
+  const [selectedRedirect, setSelectedRedirect] = useState(null);
 
   useEffect(() => {
-    fetchQrCodes();
+    fetchRedirects();
   }, []);
 
-  const fetchQrCodes = async () => {
+  const fetchRedirects = async () => {
     try {
       const response = await fetch(`${API_URL}`);
       const data = await response.json();
-      setQrCodes(data);
+      setRedirects(data);
     } catch (error) {
-      console.error('Error fetching QR codes:', error);
+      console.error('Error fetching redirects:', error);
       toast({
         title: "Error",
-        description: "Failed to fetch QR codes",
+        description: "Failed to fetch redirects",
         variant: "destructive",
       });
     }
@@ -44,7 +44,7 @@ function App() {
     }
   };
 
-  const generateQrCode = async () => {
+  const generateRedirect = async () => {
     if (!destinationUrl) {
       toast({
         title: "Error",
@@ -77,28 +77,28 @@ function App() {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to create QR code');
+        throw new Error('Failed to create redirect');
       }
 
-      const newQrCode = await response.json();
-      setQrCodes([...qrCodes, newQrCode]);
+      const newRedirect = await response.json();
+      setRedirects([...redirects, newRedirect]);
       setDestinationUrl("");
 
       toast({
         title: "Success",
-        description: "QR Code generated successfully!",
+        description: "Redirect created successfully!",
       });
     } catch (error) {
-      console.error('Error creating QR code:', error);
+      console.error('Error creating redirect:', error);
       toast({
         title: "Error",
-        description: "Failed to generate QR code",
+        description: "Failed to create redirect",
         variant: "destructive",
       });
     }
   };
 
-  const updateDestination = async (qrCode) => {
+  const updateDestination = async (redirect) => {
     if (!destinationUrl) {
       toast({
         title: "Error",
@@ -118,7 +118,7 @@ function App() {
     }
 
     try {
-      const response = await fetch(`${API_URL}/${qrCode.id}`, {
+      const response = await fetch(`${API_URL}/${redirect.id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -129,22 +129,22 @@ function App() {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to update QR code');
+        throw new Error('Failed to update redirect');
       }
 
-      const updatedQrCode = await response.json();
-      setQrCodes(qrCodes.map((qr) =>
-        qr.id === qrCode.id ? updatedQrCode : qr
+      const updatedRedirect = await response.json();
+      setRedirects(redirects.map((r) =>
+        r.id === redirect.id ? updatedRedirect : r
       ));
       setDestinationUrl("");
-      setSelectedQr(null);
+      setSelectedRedirect(null);
 
       toast({
         title: "Success",
         description: "Destination URL updated successfully!",
       });
     } catch (error) {
-      console.error('Error updating QR code:', error);
+      console.error('Error updating redirect:', error);
       toast({
         title: "Error",
         description: "Failed to update destination URL",
@@ -155,19 +155,16 @@ function App() {
 
   const handleKeyPress = (e) => {
     if (e.key === 'Enter') {
-      if (selectedQr) {
-        updateDestination(selectedQr);
+      if (selectedRedirect) {
+        updateDestination(selectedRedirect);
       } else {
-        generateQrCode();
+        generateRedirect();
       }
     }
   };
 
   const getRedirectUrl = (id) => {
-    if (import.meta.env.PROD) {
-      return `https://dynamicscan.vercel.app/r/${id}`;
-    }
-    return `${window.location.origin}/r/${id}`;
+    return `https://dynamicscan.vercel.app/r/${id}`;
   };
 
   return (
@@ -178,9 +175,9 @@ function App() {
           animate={{ opacity: 1, y: 0 }}
           className="mb-12 text-center"
         >
-          <h1 className="mb-4 text-4xl font-bold text-gray-900">Dynamic QR Code System</h1>
+          <h1 className="mb-4 text-4xl font-bold text-gray-900">Dynamic Redirect System</h1>
           <p className="text-lg text-gray-600">
-            Generate QR codes with updatable destinations
+            Create QR codes with updatable destinations
           </p>
         </motion.div>
 
@@ -196,12 +193,12 @@ function App() {
                 onChange={(e) => setDestinationUrl(e.target.value)}
                 onKeyPress={handleKeyPress}
               />
-              {selectedQr ? (
-                <Button onClick={() => updateDestination(selectedQr)}>
+              {selectedRedirect ? (
+                <Button onClick={() => updateDestination(selectedRedirect)}>
                   Update Destination
                 </Button>
               ) : (
-                <Button onClick={generateQrCode}>Generate QR</Button>
+                <Button onClick={generateRedirect}>Create Redirect</Button>
               )}
             </div>
           </div>
@@ -212,34 +209,34 @@ function App() {
           animate={{ opacity: 1 }}
           className="grid gap-6 md:grid-cols-2 lg:grid-cols-3"
         >
-          {qrCodes.map((qrCode) => (
+          {redirects.map((redirect) => (
             <motion.div
-              key={qrCode.id}
+              key={redirect.id}
               layout
               className="rounded-xl bg-white p-6 shadow-lg"
             >
               <div className="mb-4 flex justify-center">
                 <QRCode
-                  value={getRedirectUrl(qrCode.id)}
+                  value={getRedirectUrl(redirect.id)}
                   size={160}
                   className="h-40 w-40"
                   level="H"
                 />
               </div>
               <div className="text-center">
-                <p className="mb-2 font-medium text-gray-900">ID: {qrCode.id}</p>
+                <p className="mb-2 font-medium text-gray-900">ID: {redirect.id}</p>
                 <p className="mb-2 text-sm text-gray-500 break-all">
-                  QR URL: {getRedirectUrl(qrCode.id)}
+                  Redirect URL: {getRedirectUrl(redirect.id)}
                 </p>
                 <p className="mb-4 text-sm text-gray-500 break-all">
-                  Redirects to: {qrCode.destinationUrl}
+                  Points to: {redirect.destinationUrl}
                 </p>
                 <div className="flex gap-2 justify-center">
                   <Button
                     variant="outline"
                     onClick={() => {
-                      setSelectedQr(qrCode);
-                      setDestinationUrl(qrCode.destinationUrl);
+                      setSelectedRedirect(redirect);
+                      setDestinationUrl(redirect.destinationUrl);
                     }}
                   >
                     Change Destination
@@ -247,7 +244,7 @@ function App() {
                   <Button
                     variant="outline"
                     onClick={() => {
-                      window.open(qrCode.destinationUrl, '_blank');
+                      window.open(redirect.destinationUrl, '_blank');
                     }}
                   >
                     Test URL

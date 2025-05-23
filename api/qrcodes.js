@@ -1,5 +1,5 @@
 // In-memory storage (replace with a database in production)
-let qrCodes = [];
+let redirects = new Map();
 
 export default async function handler(req, res) {
   // Enable CORS
@@ -28,46 +28,52 @@ export default async function handler(req, res) {
   switch (req.method) {
     case 'GET':
       if (id && id !== 'qrcodes') {
-        // Get specific QR code
-        console.log('Looking for QR code with ID:', id);
-        const qrCode = qrCodes.find(qr => qr.id === id);
-        console.log('Found QR code:', qrCode);
+        // Get specific redirect
+        console.log('Looking for redirect with ID:', id);
+        const redirect = redirects.get(id);
+        console.log('Found redirect:', redirect);
         
-        if (!qrCode) {
-          console.log('QR code not found');
-          return res.status(404).json({ error: 'QR code not found' });
+        if (!redirect) {
+          console.log('Redirect not found');
+          return res.status(404).json({ error: 'Redirect not found' });
         }
-        return res.json(qrCode);
+        return res.json(redirect);
       } else {
-        // Get all QR codes
-        console.log('Returning all QR codes:', qrCodes);
-        return res.json(qrCodes);
+        // Get all redirects
+        const allRedirects = Array.from(redirects.entries()).map(([id, data]) => ({
+          id,
+          ...data
+        }));
+        console.log('Returning all redirects:', allRedirects);
+        return res.json(allRedirects);
       }
 
     case 'POST':
       const { destinationUrl } = req.body;
-      const newQrCode = {
+      const newRedirect = {
         id: req.body.id,
         destinationUrl,
         createdAt: new Date().toISOString(),
       };
-      console.log('Creating new QR code:', newQrCode);
-      qrCodes.push(newQrCode);
-      return res.status(201).json(newQrCode);
+      console.log('Creating new redirect:', newRedirect);
+      redirects.set(newRedirect.id, newRedirect);
+      return res.status(201).json(newRedirect);
 
     case 'PUT':
       if (!id || id === 'qrcodes') {
         return res.status(400).json({ error: 'ID is required' });
       }
-      const qrCodeIndex = qrCodes.findIndex(qr => qr.id === id);
-      if (qrCodeIndex === -1) {
-        return res.status(404).json({ error: 'QR code not found' });
+      const existingRedirect = redirects.get(id);
+      if (!existingRedirect) {
+        return res.status(404).json({ error: 'Redirect not found' });
       }
-      qrCodes[qrCodeIndex] = {
-        ...qrCodes[qrCodeIndex],
+      const updatedRedirect = {
+        ...existingRedirect,
         destinationUrl: req.body.destinationUrl,
+        updatedAt: new Date().toISOString(),
       };
-      return res.json(qrCodes[qrCodeIndex]);
+      redirects.set(id, updatedRedirect);
+      return res.json(updatedRedirect);
 
     default:
       res.setHeader('Allow', ['GET', 'POST', 'PUT', 'OPTIONS']);
