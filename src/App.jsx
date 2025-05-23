@@ -164,6 +164,9 @@ function App() {
   };
 
   const getRedirectUrl = (id) => {
+    if (import.meta.env.PROD) {
+      return `https://dynamicscan.vercel.app/r/${id}`;
+    }
     const baseUrl = window.location.origin;
     return `${baseUrl}/r/${id}`;
   };

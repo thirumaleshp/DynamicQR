@@ -1,9 +1,16 @@
 {
     "rewrites": [
-      { "source": "/(.*)", "destination": "/index.html" },
       {
         "source": "/api/qrcodes/:path*",
         "destination": "/api/qrcodes"
+      },
+      {
+        "source": "/r/:path*",
+        "destination": "/index.html"
+      },
+      {
+        "source": "/(.*)",
+        "destination": "/index.html"
       }
     ]
   }
