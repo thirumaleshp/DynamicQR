@@ -17,19 +17,30 @@ export default async function handler(req, res) {
     return;
   }
 
-  const { id } = req.query;
+  // Extract ID from the path
+  const path = req.url.split('/');
+  const id = path[path.length - 1];
+
+  console.log('Request method:', req.method);
+  console.log('Request URL:', req.url);
+  console.log('Extracted ID:', id);
 
   switch (req.method) {
     case 'GET':
-      if (id) {
+      if (id && id !== 'qrcodes') {
         // Get specific QR code
+        console.log('Looking for QR code with ID:', id);
         const qrCode = qrCodes.find(qr => qr.id === id);
+        console.log('Found QR code:', qrCode);
+        
         if (!qrCode) {
+          console.log('QR code not found');
           return res.status(404).json({ error: 'QR code not found' });
         }
         return res.json(qrCode);
       } else {
         // Get all QR codes
+        console.log('Returning all QR codes:', qrCodes);
         return res.json(qrCodes);
       }
 
@@ -40,11 +51,12 @@ export default async function handler(req, res) {
         destinationUrl,
         createdAt: new Date().toISOString(),
       };
+      console.log('Creating new QR code:', newQrCode);
       qrCodes.push(newQrCode);
       return res.status(201).json(newQrCode);
 
     case 'PUT':
-      if (!id) {
+      if (!id || id === 'qrcodes') {
         return res.status(400).json({ error: 'ID is required' });
       }
       const qrCodeIndex = qrCodes.findIndex(qr => qr.id === id);

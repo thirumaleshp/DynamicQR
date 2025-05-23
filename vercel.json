@@ -1,7 +1,11 @@
 {
     "rewrites": [
       {
-        "source": "/api/qrcodes/:path*",
+        "source": "/api/qrcodes/:id",
+        "destination": "/api/qrcodes"
+      },
+      {
+        "source": "/api/qrcodes",
         "destination": "/api/qrcodes"
       },
       {

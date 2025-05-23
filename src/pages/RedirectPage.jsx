@@ -12,14 +12,21 @@ function RedirectPage() {
   useEffect(() => {
     const redirectToDestination = async () => {
       try {
+        console.log('Fetching QR code for ID:', id);
         const response = await fetch(`${API_URL}/${id}`);
+        console.log('Response status:', response.status);
+        
         if (!response.ok) {
+          console.error('Response not OK:', response.status);
           setError(true);
           return;
         }
 
         const qrCode = await response.json();
+        console.log('QR code data:', qrCode);
+
         if (!qrCode || !qrCode.destinationUrl) {
+          console.error('Invalid QR code data:', qrCode);
           setError(true);
           return;
         }
@@ -27,10 +34,12 @@ function RedirectPage() {
         // Optional: Check if URL is valid
         const isValidUrl = /^https?:\/\//i.test(qrCode.destinationUrl);
         if (!isValidUrl) {
+          console.error('Invalid destination URL:', qrCode.destinationUrl);
           setError(true);
           return;
         }
 
+        console.log('Redirecting to:', qrCode.destinationUrl);
         // Redirect to the destination URL
         window.location.replace(qrCode.destinationUrl);
       } catch (err) {
