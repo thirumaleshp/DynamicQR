@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/use-toast";
 import { Toaster } from "@/components/ui/toaster";
 
-const API_URL = '/api';
+const API_URL = import.meta.env.PROD ? '/api/qrcodes' : '/api/qrcodes';
 
 function App() {
   const { toast } = useToast();
@@ -22,7 +22,7 @@ function App() {
 
   const fetchQrCodes = async () => {
     try {
-      const response = await fetch(`${API_URL}/qrcodes`);
+      const response = await fetch(`${API_URL}`);
       const data = await response.json();
       setQrCodes(data);
     } catch (error) {
@@ -65,7 +65,7 @@ function App() {
 
     try {
       const id = nanoid(6);
-      const response = await fetch(`${API_URL}/qrcodes`, {
+      const response = await fetch(`${API_URL}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -118,7 +118,7 @@ function App() {
     }
 
     try {
-      const response = await fetch(`${API_URL}/qrcodes/${qrCode.id}`, {
+      const response = await fetch(`${API_URL}/${qrCode.id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

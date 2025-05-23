@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 
-const API_URL = '/api';
+const API_URL = import.meta.env.PROD ? '/api/qrcodes' : '/api/qrcodes';
 
 function RedirectPage() {
   const { id } = useParams();
@@ -12,7 +12,7 @@ function RedirectPage() {
   useEffect(() => {
     const redirectToDestination = async () => {
       try {
-        const response = await fetch(`${API_URL}/qrcodes/${id}`);
+        const response = await fetch(`${API_URL}/${id}`);
         if (!response.ok) {
           setError(true);
           return;
