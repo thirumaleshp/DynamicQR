@@ -45,6 +45,7 @@ function App() {
   };
 
   const generateRedirect = async () => {
+    console.log('Attempting to generate redirect');
     if (!destinationUrl) {
       toast({
         title: "Error",

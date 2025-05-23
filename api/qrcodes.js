@@ -20,61 +20,101 @@ export default async function handler(req, res) {
     return;
   }
 
-  // Extract ID from the path
+  // Extract ID from the path - only relevant for GET/PUT/DELETE on a specific ID
   const path = req.url.split('/');
-  const id = path[path.length - 1];
+  const idFromPath = path[path.length - 1];
+  const id = (idFromPath === 'qrcodes' || idFromPath === '') ? null : idFromPath; // Treat '/qrcodes' or '/' as no ID
 
   console.log('Request method:', req.method);
   console.log('Request URL:', req.url);
-  console.log('Extracted ID:', id);
+  console.log('Extracted ID (from path):', id);
+  console.log('Supabase URL defined:', !!supabaseUrl);
+  console.log('Supabase Key defined:', !!supabaseKey);
 
   switch (req.method) {
     case 'GET':
-      if (id && id !== 'qrcodes') {
+      if (id) {
         // Get specific redirect
+        console.log('Looking for redirect with ID:', id);
         const { data, error } = await supabase
           .from('redirects')
           .select('*')
           .eq('id', id)
           .single();
+
+        console.log('Supabase GET result - data:', data);
+        console.log('Supabase GET result - error:', error);
+
         if (error || !data) {
+          console.log('Redirect not found or error fetching');
           return res.status(404).json({ error: 'Redirect not found' });
         }
         return res.json(data);
       } else {
         // Get all redirects
+        console.log('Fetching all redirects');
         const { data, error } = await supabase.from('redirects').select('*');
+
+        console.log('Supabase GET all result - data:', data);
+        console.log('Supabase GET all result - error:', error);
+
         if (error) {
+          console.error('Failed to fetch redirects from Supabase:', error);
           return res.status(500).json({ error: 'Failed to fetch redirects' });
         }
         return res.json(data);
       }
 
     case 'POST':
-      const { id: newId, destinationUrl } = req.body;
-      const { data: created, error: createError } = await supabase
-        .from('redirects')
-        .insert([{ id: newId, destination_url: destinationUrl }])
-        .select()
-        .single();
-      if (createError) {
-        return res.status(500).json({ error: 'Failed to create redirect' });
+      // POST request for creating a new redirect - ID comes from the request body
+      try {
+        const { id: newId, destinationUrl } = req.body;
+        console.log('Attempting to create redirect with ID:', newId, 'and URL:', destinationUrl);
+
+        if (!newId || !destinationUrl) {
+           console.error('Missing ID or destinationUrl in request body');
+           return res.status(400).json({ error: 'Missing ID or destination URL in request body' });
+        }
+
+        const { data: created, error: createError } = await supabase
+          .from('redirects')
+          .insert([{ id: newId, destination_url: destinationUrl }])
+          .select()
+          .single();
+
+        console.log('Supabase POST result - created:', created);
+        console.log('Supabase POST result - createError:', createError);
+
+        if (createError) {
+          console.error('Failed to create redirect in Supabase:', createError);
+          // More specific error message might be in createError.details or createError.message
+          return res.status(500).json({ error: createError.message || 'Failed to create redirect' });
+        }
+        return res.status(201).json(created);
+      } catch (parseError) {
+         console.error('Error parsing request body:', parseError);
+         return res.status(400).json({ error: 'Invalid request body' });
       }
-      return res.status(201).json(created);
 
     case 'PUT':
-      if (!id || id === 'qrcodes') {
-        return res.status(400).json({ error: 'ID is required' });
+      if (!id) {
+        return res.status(400).json({ error: 'ID is required for PUT' });
       }
       const { destinationUrl: newDest } = req.body;
+      console.log('Attempting to update redirect with ID:', id, 'to URL:', newDest);
       const { data: updated, error: updateError } = await supabase
         .from('redirects')
         .update({ destination_url: newDest, updated_at: new Date().toISOString() })
         .eq('id', id)
         .select()
         .single();
+
+      console.log('Supabase PUT result - updated:', updated);
+      console.log('Supabase PUT result - updateError:', updateError);
+
       if (updateError || !updated) {
-        return res.status(404).json({ error: 'Failed to update redirect' });
+        console.error('Failed to update redirect in Supabase:', updateError);
+         return res.status(404).json({ error: updateError.message || 'Failed to update redirect' });
       }
       return res.json(updated);
 
