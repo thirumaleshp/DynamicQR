@@ -1,5 +1,8 @@
-// In-memory storage (replace with a database in production)
-let redirects = new Map();
+import { createClient } from '@supabase/supabase-js';
+
+const supabaseUrl = process.env.SUPABASE_URL; // Set in Vercel dashboard or .env.local
+const supabaseKey = process.env.SUPABASE_ANON_KEY; // Set in Vercel dashboard or .env.local
+const supabase = createClient(supabaseUrl, supabaseKey);
 
 export default async function handler(req, res) {
   // Enable CORS
@@ -29,51 +32,51 @@ export default async function handler(req, res) {
     case 'GET':
       if (id && id !== 'qrcodes') {
         // Get specific redirect
-        console.log('Looking for redirect with ID:', id);
-        const redirect = redirects.get(id);
-        console.log('Found redirect:', redirect);
-        
-        if (!redirect) {
-          console.log('Redirect not found');
+        const { data, error } = await supabase
+          .from('redirects')
+          .select('*')
+          .eq('id', id)
+          .single();
+        if (error || !data) {
           return res.status(404).json({ error: 'Redirect not found' });
         }
-        return res.json(redirect);
+        return res.json(data);
       } else {
         // Get all redirects
-        const allRedirects = Array.from(redirects.entries()).map(([id, data]) => ({
-          id,
-          ...data
-        }));
-        console.log('Returning all redirects:', allRedirects);
-        return res.json(allRedirects);
+        const { data, error } = await supabase.from('redirects').select('*');
+        if (error) {
+          return res.status(500).json({ error: 'Failed to fetch redirects' });
+        }
+        return res.json(data);
       }
 
     case 'POST':
-      const { destinationUrl } = req.body;
-      const newRedirect = {
-        id: req.body.id,
-        destinationUrl,
-        createdAt: new Date().toISOString(),
-      };
-      console.log('Creating new redirect:', newRedirect);
-      redirects.set(newRedirect.id, newRedirect);
-      return res.status(201).json(newRedirect);
+      const { id: newId, destinationUrl } = req.body;
+      const { data: created, error: createError } = await supabase
+        .from('redirects')
+        .insert([{ id: newId, destination_url: destinationUrl }])
+        .select()
+        .single();
+      if (createError) {
+        return res.status(500).json({ error: 'Failed to create redirect' });
+      }
+      return res.status(201).json(created);
 
     case 'PUT':
       if (!id || id === 'qrcodes') {
         return res.status(400).json({ error: 'ID is required' });
       }
-      const existingRedirect = redirects.get(id);
-      if (!existingRedirect) {
-        return res.status(404).json({ error: 'Redirect not found' });
+      const { destinationUrl: newDest } = req.body;
+      const { data: updated, error: updateError } = await supabase
+        .from('redirects')
+        .update({ destination_url: newDest, updated_at: new Date().toISOString() })
+        .eq('id', id)
+        .select()
+        .single();
+      if (updateError || !updated) {
+        return res.status(404).json({ error: 'Failed to update redirect' });
       }
-      const updatedRedirect = {
-        ...existingRedirect,
-        destinationUrl: req.body.destinationUrl,
-        updatedAt: new Date().toISOString(),
-      };
-      redirects.set(id, updatedRedirect);
-      return res.json(updatedRedirect);
+      return res.json(updated);
 
     default:
       res.setHeader('Allow', ['GET', 'POST', 'PUT', 'OPTIONS']);
