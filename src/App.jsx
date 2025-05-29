@@ -11,19 +11,22 @@ import { Toaster } from "@/components/ui/toaster";
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-const API_URL = import.meta.env.PROD ? 'https://dynamicscan.vercel.app/api/qrcodes' : 'http://localhost:3001/api/redirects';
+const API_URL = import.meta.env.PROD ? 'https://dynamicscan.vercel.app/api/qrcodes' : 'http://localhost:3001/api/qrcodes';
 
 function App() {
   const { toast } = useToast();
   const [redirects, setRedirects] = useState([]);
   const [destinationUrl, setDestinationUrl] = useState("");
   const [selectedRedirect, setSelectedRedirect] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isCreating, setIsCreating] = useState(false);
 
   useEffect(() => {
     fetchRedirects();
   }, []);
 
   const fetchRedirects = async () => {
+    setIsLoading(true);
     try {
       const response = await fetch(`${API_URL}`);
       const data = await response.json();
@@ -35,6 +38,8 @@ function App() {
         description: "Failed to fetch redirects",
         variant: "destructive",
       });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -48,7 +53,6 @@ function App() {
   };
 
   const generateRedirect = async () => {
-    console.log('Attempting to generate redirect (Client-Side)');
     if (!destinationUrl) {
       toast({
         title: "Error",
@@ -67,6 +71,7 @@ function App() {
       return;
     }
 
+    setIsCreating(true);
     try {
       const id = nanoid(6);
       console.log('Generated ID:', id);
@@ -86,7 +91,7 @@ function App() {
       }
 
       const created = await response.json();
-      setRedirects([...redirects, created]);
+      setRedirects(prevRedirects => [...prevRedirects, created]);
       setDestinationUrl("");
 
       toast({
@@ -94,12 +99,14 @@ function App() {
         description: "Redirect created successfully!",
       });
     } catch (error) {
-      console.error('Error creating redirect (Client-Side Catch):', error);
+      console.error('Error creating redirect:', error);
       toast({
         title: "Error",
         description: "Failed to create redirect",
         variant: "destructive",
       });
+    } finally {
+      setIsCreating(false);
     }
   };
 
@@ -197,68 +204,84 @@ function App() {
                 value={destinationUrl}
                 onChange={(e) => setDestinationUrl(e.target.value)}
                 onKeyPress={handleKeyPress}
+                disabled={isCreating}
               />
               {selectedRedirect ? (
-                <Button onClick={() => updateDestination(selectedRedirect)}>
-                  Update Destination
+                <Button 
+                  onClick={() => updateDestination(selectedRedirect)}
+                  disabled={isCreating}
+                >
+                  {isCreating ? 'Updating...' : 'Update Destination'}
                 </Button>
               ) : (
-                <Button onClick={generateRedirect}>Create Redirect</Button>
+                <Button 
+                  onClick={generateRedirect}
+                  disabled={isCreating}
+                >
+                  {isCreating ? 'Creating...' : 'Create Redirect'}
+                </Button>
               )}
             </div>
           </div>
         </div>
 
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          className="grid gap-6 md:grid-cols-2 lg:grid-cols-3"
-        >
-          {redirects.map((redirect) => (
-            <motion.div
-              key={redirect.id}
-              layout
-              className="rounded-xl bg-white p-6 shadow-lg"
-            >
-              <div className="mb-4 flex justify-center">
-                <QRCode
-                  value={getRedirectUrl(redirect.id)}
-                  size={160}
-                  className="h-40 w-40"
-                  level="H"
-                />
-              </div>
-              <div className="text-center">
-                <p className="mb-2 font-medium text-gray-900">ID: {redirect.id}</p>
-                <p className="mb-2 text-sm text-gray-500 break-all">
-                  Redirect URL: {getRedirectUrl(redirect.id)}
-                </p>
-                <p className="mb-4 text-sm text-gray-500 break-all">
-                  Points to: {redirect.destinationUrl}
-                </p>
-                <div className="flex gap-2 justify-center">
-                  <Button
-                    variant="outline"
-                    onClick={() => {
-                      setSelectedRedirect(redirect);
-                      setDestinationUrl(redirect.destinationUrl);
-                    }}
-                  >
-                    Change Destination
-                  </Button>
-                  <Button
-                    variant="outline"
-                    onClick={() => {
-                      window.open(redirect.destinationUrl, '_blank');
-                    }}
-                  >
-                    Test URL
-                  </Button>
+        {isLoading ? (
+          <div className="text-center py-8">
+            <p className="text-gray-600">Loading redirects...</p>
+          </div>
+        ) : (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="grid gap-6 md:grid-cols-2 lg:grid-cols-3"
+          >
+            {redirects.map((redirect) => (
+              <motion.div
+                key={redirect.id}
+                layout
+                className="rounded-xl bg-white p-6 shadow-lg"
+              >
+                <div className="mb-4 flex justify-center">
+                  <QRCode
+                    value={getRedirectUrl(redirect.id)}
+                    size={160}
+                    className="h-40 w-40"
+                    level="H"
+                  />
                 </div>
-              </div>
-            </motion.div>
-          ))}
-        </motion.div>
+                <div className="text-center">
+                  <p className="mb-2 font-medium text-gray-900">ID: {redirect.id}</p>
+                  <p className="mb-2 text-sm text-gray-500 break-all">
+                    Redirect URL: {getRedirectUrl(redirect.id)}
+                  </p>
+                  <p className="mb-4 text-sm text-gray-500 break-all">
+                    Points to: {redirect.destinationUrl}
+                  </p>
+                  <div className="flex gap-2 justify-center">
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        setSelectedRedirect(redirect);
+                        setDestinationUrl(redirect.destinationUrl);
+                      }}
+                      disabled={isCreating}
+                    >
+                      Change Destination
+                    </Button>
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        window.open(redirect.destinationUrl, '_blank');
+                      }}
+                    >
+                      Test URL
+                    </Button>
+                  </div>
+                </div>
+              </motion.div>
+            ))}
+          </motion.div>
+        )}
       </div>
       <footer className="mt-20 text-center text-sm text-gray-900">
         Profile{" "}
