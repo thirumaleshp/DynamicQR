@@ -1,21 +1,31 @@
 {
-    "rewrites": [
-      {
-        "source": "/api/qrcodes/:id",
-        "destination": "/api/qrcodes"
-      },
-      {
-        "source": "/api/qrcodes",
-        "destination": "/api/qrcodes"
-      },
-      {
-        "source": "/r/:path*",
-        "destination": "/index.html"
-      },
-      {
-        "source": "/(.*)",
-        "destination": "/index.html"
+  "version": 2,
+  "builds": [
+    {
+      "src": "server.js",
+      "use": "@vercel/node"
+    },
+    {
+      "src": "package.json",
+      "use": "@vercel/static-build",
+      "config": {
+        "distDir": "dist"
       }
-    ]
-  }
+    }
+  ],
+  "routes": [
+    {
+      "src": "/api/qrcodes/(.*)",
+      "dest": "server.js"
+    },
+    {
+      "src": "/r/(.*)",
+      "dest": "server.js"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/dist/$1"
+    }
+  ]
+}
   
