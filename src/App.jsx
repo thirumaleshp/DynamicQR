@@ -12,7 +12,9 @@ import { getAllRedirects, getRedirectById, createRedirect, updateRedirect } from
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-const API_URL = import.meta.env.PROD ? 'https://dynamicscan.vercel.app/api/qrcodes' : 'http://localhost:3001/api/qrcodes';
+const API_URL = import.meta.env.PROD
+  ? 'https://dynamicscan.vercel.app/api/redirects'
+  : 'http://localhost:3001/api/redirects';
 
 function App() {
   const { toast } = useToast();
@@ -29,7 +31,7 @@ function App() {
   const fetchRedirects = async () => {
     setIsLoading(true);
     try {
-      const response = await fetch(`${API_URL}`);
+      const response = await fetch(API_URL);
       const data = await response.json();
       setRedirects(data);
     } catch (error) {
@@ -74,24 +76,15 @@ function App() {
 
     setIsCreating(true);
     try {
-      const response = await fetch(`${API_URL}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          destinationUrl,
-        }),
+      const response = await fetch(API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ destinationUrl }),
       });
-
-      if (!response.ok) {
-        throw new Error('Failed to create redirect');
-      }
-
+      if (!response.ok) throw new Error("Failed to create redirect");
       const created = await response.json();
-      setRedirects(prevRedirects => [...prevRedirects, created]);
+      setRedirects([...redirects, created]);
       setDestinationUrl("");
-
       toast({
         title: "Success",
         description: "Redirect created successfully!",
@@ -129,30 +122,21 @@ function App() {
 
     try {
       const response = await fetch(`${API_URL}/${redirect.id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          destinationUrl,
-        }),
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ destinationUrl }),
       });
-
-      if (!response.ok) {
-        throw new Error('Failed to update redirect');
-      }
-
+      if (!response.ok) throw new Error("Failed to update redirect");
       const updatedRedirect = await response.json();
-      setRedirects(redirects.map((r) =>
-        r.id === redirect.id ? updatedRedirect : r
-      ));
-    setDestinationUrl("");
+      setRedirects(
+        redirects.map((r) => (r.id === redirect.id ? updatedRedirect : r))
+      );
+      setDestinationUrl("");
       setSelectedRedirect(null);
-
-    toast({
-      title: "Success",
-      description: "Destination URL updated successfully!",
-    });
+      toast({
+        title: "Success",
+        description: "Destination URL updated successfully!",
+      });
     } catch (error) {
       console.error('Error updating redirect:', error);
       toast({
@@ -164,7 +148,7 @@ function App() {
   };
 
   const handleKeyPress = (e) => {
-    if (e.key === 'Enter') {
+    if (e.key === "Enter") {
       if (selectedRedirect) {
         updateDestination(selectedRedirect);
       } else {
@@ -174,7 +158,7 @@ function App() {
   };
 
   const getRedirectUrl = (id) => {
-    return import.meta.env.PROD 
+    return import.meta.env.PROD
       ? `https://dynamicscan.vercel.app/r/${id}`
       : `http://localhost:3001/r/${id}`;
   };
