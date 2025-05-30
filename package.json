@@ -3,9 +3,12 @@
   "type": "module",
   "version": "0.0.0",
   "private": true,
+  "engines": {
+    "node": ">=18.0.0"
+  },
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "node vercel.build.js",
     "preview": "vite preview",
     "server": "node server.js",
     "start": "node server.js"
