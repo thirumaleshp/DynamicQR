@@ -24,16 +24,12 @@ app.use((req, res, next) => {
 
 // GET all redirects
 app.get('/api/qrcodes', (req, res) => {
-  console.log('Fetching all redirects...');
-  const data = Array.from(redirects.values());
-  console.log(`Found ${data.length} redirects`);
-  res.json(data);
+  res.json(Array.from(redirects.values()));
 });
 
 // GET a single redirect by ID
 app.get('/api/qrcodes/:id', (req, res) => {
   const id = req.params.id;
-  console.log(`Fetching redirect for ID: ${id}`);
   const redirect = redirects.get(id);
 
   if (redirect) {
@@ -44,18 +40,16 @@ app.get('/api/qrcodes/:id', (req, res) => {
 });
 
 // POST a new redirect
-app.post('/api/qrcodes/:id', (req, res) => {
-  const id = req.params.id;
+app.post('/api/qrcodes', (req, res) => {
   const { destinationUrl } = req.body;
-  console.log(`Creating new redirect - ID: ${id}, URL: ${destinationUrl}`);
-  
   if (!destinationUrl) {
     return res.status(400).json({ error: 'Destination URL is required' });
   }
 
+  const id = nanoid(6);
   const newRedirect = { id, destinationUrl };
   redirects.set(id, newRedirect);
-  console.log('Redirect created successfully');
+
   res.status(201).json(newRedirect);
 });
 
