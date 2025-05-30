@@ -1,63 +1,32 @@
 import { nanoid } from 'nanoid';
-
-// In-memory storage (replace with a database in production)
-const redirects = new Map();
+import { getAllRedirects, getRedirectById, createRedirect, updateRedirect } from '../../lib/db';
 
 export default function handler(req, res) {
+  const { id } = req.query;
+
   switch (req.method) {
     case 'GET':
-      return handleGet(req, res);
+      if (id) {
+        const redirect = getRedirectById(id);
+        if (redirect) return res.json(redirect);
+        return res.status(404).json({ error: 'Not found' });
+      }
+      return res.json(getAllRedirects());
     case 'POST':
-      return handlePost(req, res);
+      const { destinationUrl } = req.body;
+      if (!destinationUrl) return res.status(400).json({ error: 'Destination URL is required' });
+      const newRedirect = { id: nanoid(6), destinationUrl };
+      createRedirect(newRedirect);
+      return res.status(201).json(newRedirect);
     case 'PUT':
-      return handlePut(req, res);
+      if (!id) return res.status(400).json({ error: 'ID is required' });
+      const { destinationUrl: newUrl } = req.body;
+      if (!newUrl) return res.status(400).json({ error: 'Destination URL is required' });
+      const updated = updateRedirect(id, { destinationUrl: newUrl });
+      if (!updated) return res.status(404).json({ error: 'Not found' });
+      return res.json(updated);
     default:
       res.setHeader('Allow', ['GET', 'POST', 'PUT']);
-      res.status(405).end(`Method ${req.method} Not Allowed`);
+      return res.status(405).end(`Method ${req.method} Not Allowed`);
   }
-}
-
-function handleGet(req, res) {
-  const { id } = req.query;
-  if (id) {
-    const redirect = redirects.get(id);
-    if (redirect) {
-      res.json(redirect);
-    } else {
-      res.status(404).json({ error: 'Redirect not found' });
-    }
-  } else {
-    res.json(Array.from(redirects.values()));
-  }
-}
-
-function handlePost(req, res) {
-  const { destinationUrl } = req.body;
-  if (!destinationUrl) {
-    return res.status(400).json({ error: 'Destination URL is required' });
-  }
-
-  const id = nanoid(6);
-  const newRedirect = { id, destinationUrl };
-  redirects.set(id, newRedirect);
-
-  res.status(201).json(newRedirect);
-}
-
-function handlePut(req, res) {
-  const { id } = req.query;
-  const { destinationUrl } = req.body;
-
-  if (!redirects.has(id)) {
-    return res.status(404).json({ error: 'Redirect not found' });
-  }
-
-  if (!destinationUrl) {
-    return res.status(400).json({ error: 'Destination URL is required' });
-  }
-
-  const updatedRedirect = { id, destinationUrl };
-  redirects.set(id, updatedRedirect);
-
-  res.json(updatedRedirect);
 } 
