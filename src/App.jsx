@@ -68,16 +68,13 @@ function App() {
     }
 
     try {
-    const id = nanoid(6);
-      console.log('Generated ID:', id);
-
-      const response = await fetch(`${API_URL}/${id}`, {
+      const response = await fetch(`${API_URL}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-      destinationUrl,
+          destinationUrl,
         }),
       });
 
@@ -87,12 +84,12 @@ function App() {
 
       const created = await response.json();
       setRedirects([...redirects, created]);
-    setDestinationUrl("");
+      setDestinationUrl("");
 
-    toast({
-      title: "Success",
+      toast({
+        title: "Success",
         description: "Redirect created successfully!",
-    });
+      });
     } catch (error) {
       console.error('Error creating redirect (Client-Side Catch):', error);
       toast({
