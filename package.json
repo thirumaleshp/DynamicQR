@@ -1,14 +1,13 @@
 {
   "name": "dynamic-qr-codes",
-  "type": "module",
   "version": "0.0.0",
   "private": true,
   "engines": {
-    "node": ">=18.0.0"
+    "node": "18.x"
   },
   "scripts": {
     "dev": "vite",
-    "build": "node vercel.build.js",
+    "build": "vite build",
     "preview": "vite preview",
     "server": "node server.js",
     "start": "node server.js"

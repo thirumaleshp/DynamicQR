@@ -1,17 +1,16 @@
 {
-  "buildCommand": "npm run build",
-  "devCommand": "npm run dev",
-  "installCommand": "npm install",
-  "framework": "vite",
-  "rewrites": [
+  "version": 2,
+  "builds": [
     {
-      "source": "/api/:path*",
-      "destination": "/api/:path*"
-    },
-    {
-      "source": "/r/:path*",
-      "destination": "/api/r/:path*"
+      "src": "package.json",
+      "use": "@vercel/static-build"
     }
+  ],
+  "routes": [
+    { "handle": "filesystem" },
+    { "src": "/api/(.*)", "dest": "/api/$1" },
+    { "src": "/r/(.*)", "dest": "/api/r/$1" },
+    { "src": "/(.*)", "dest": "/index.html" }
   ]
 }
   
