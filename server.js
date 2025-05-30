@@ -22,6 +22,18 @@ app.use((req, res, next) => {
   next();
 });
 
+// Redirect endpoint
+app.get('/r/:id', (req, res) => {
+  const id = req.params.id;
+  const redirect = redirects.get(id);
+
+  if (redirect) {
+    res.redirect(redirect.destinationUrl);
+  } else {
+    res.status(404).send('Redirect not found');
+  }
+});
+
 // GET all redirects
 app.get('/api/qrcodes', (req, res) => {
   res.json(Array.from(redirects.values()));
