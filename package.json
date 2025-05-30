@@ -6,10 +6,9 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "vercel-build": "vite build",
     "preview": "vite preview",
     "server": "node server.js",
-    "start": "concurrently \"npm run server\" \"npm run dev\""
+    "start": "node server.js"
   },
   "dependencies": {
     "@radix-ui/react-alert-dialog": "^1.0.5",

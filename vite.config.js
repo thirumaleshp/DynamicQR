@@ -1,6 +1,6 @@
-import path from 'node:path';
-import react from '@vitejs/plugin-react';
-import { defineConfig } from 'vite';
+import path from 'path'
+import react from '@vitejs/plugin-react'
+import { defineConfig } from 'vite'
 
 const configHorizonsViteErrorHandler = `
 const observer = new MutationObserver((mutations) => {
@@ -154,25 +154,26 @@ console.warn = () => {};
 
 export default defineConfig({
 	plugins: [react(), addTransformIndexHtml],
+	build: {
+		outDir: 'dist',
+		rollupOptions: {
+			output: {
+				manualChunks: undefined
+			}
+		}
+	},
 	server: {
-		cors: true,
-		headers: {
-			'Cross-Origin-Embedder-Policy': 'credentialless',
-		},
-		allowedHosts: true,
 		proxy: {
-			'/api/qrcodes': {
+			'/api': {
 				target: 'http://localhost:3001',
 				changeOrigin: true,
-				secure: false,
-				rewrite: (path) => path.replace(/^\/api/, ''),
-			},
-		},
+				secure: false
+			}
+		}
 	},
 	resolve: {
-		extensions: ['.jsx', '.js', '.tsx', '.ts', '.json', ],
 		alias: {
-			'@': path.resolve(__dirname, './src'),
-		},
-	},
-});
+			'@': path.resolve(__dirname, './src')
+		}
+	}
+})
