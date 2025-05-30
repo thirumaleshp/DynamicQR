@@ -53,7 +53,7 @@ function RedirectPage() {
       }
     };
 
-    redirectToDestination();
+      redirectToDestination();
   }, [id]);
 
   // If there's an error, show error screen

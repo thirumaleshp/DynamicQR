@@ -68,7 +68,7 @@ function App() {
     }
 
     try {
-      const id = nanoid(6);
+    const id = nanoid(6);
       console.log('Generated ID:', id);
 
       const response = await fetch(`${API_URL}/${id}`, {
@@ -77,7 +77,7 @@ function App() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          destinationUrl,
+      destinationUrl,
         }),
       });
 
@@ -87,12 +87,12 @@ function App() {
 
       const created = await response.json();
       setRedirects([...redirects, created]);
-      setDestinationUrl("");
+    setDestinationUrl("");
 
-      toast({
-        title: "Success",
+    toast({
+      title: "Success",
         description: "Redirect created successfully!",
-      });
+    });
     } catch (error) {
       console.error('Error creating redirect (Client-Side Catch):', error);
       toast({
@@ -141,13 +141,13 @@ function App() {
       setRedirects(redirects.map((r) =>
         r.id === redirect.id ? updatedRedirect : r
       ));
-      setDestinationUrl("");
+    setDestinationUrl("");
       setSelectedRedirect(null);
 
-      toast({
-        title: "Success",
-        description: "Destination URL updated successfully!",
-      });
+    toast({
+      title: "Success",
+      description: "Destination URL updated successfully!",
+    });
     } catch (error) {
       console.error('Error updating redirect:', error);
       toast({
@@ -260,17 +260,17 @@ function App() {
           ))}
         </motion.div>
       </div>
-      <footer className="mt-20 text-center text-sm text-gray-900">
-        Profile{" "}
-        <a
-          href="https://thirumalesh.xyz"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="font-medium text-indigo-600 hover:underline"
-        >
-          @thirumalesh
-        </a>
-      </footer>
+        <footer className="mt-20 text-center text-sm text-gray-900">
+            Profile{" "}
+            <a
+            href="https://thirumalesh.xyz"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="font-medium text-indigo-600 hover:underline"
+            >
+            @thirumalesh
+            </a>
+        </footer>
       <Toaster />
     </div>
   );
